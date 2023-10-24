@@ -9,5 +9,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+near-sdk = "4.1.1"
 async-trait = "0.1.73"
 integration-trait = { path = "../proc_macro" }
