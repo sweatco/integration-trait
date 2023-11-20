@@ -11,6 +11,9 @@ pub trait ContractNameInterface {
     fn set_name(&mut self, name: String);
 
     fn burn(&mut self) -> PromiseOrValue<U128>;
+
+    #[update]
+    fn update_contract(&mut self);
 }
 
 impl ContractNameInterface for () {
@@ -25,6 +28,10 @@ impl ContractNameInterface for () {
     fn set_name(&mut self, _name: String) {}
 
     fn burn(&mut self) -> PromiseOrValue<U128> {
+        todo!()
+    }
+
+    fn update_contract(&mut self) {
         todo!()
     }
 }
@@ -48,6 +55,10 @@ impl ContractNameInterfaceIntegration for () {
     }
 
     async fn burn(&mut self) -> anyhow::Result<U128> {
+        todo!()
+    }
+
+    async fn update_contract(&mut self, _code: &[u8]) -> anyhow::Result<()> {
         todo!()
     }
 }

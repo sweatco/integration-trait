@@ -7,20 +7,25 @@ use syn::{parse_macro_input, parse_str, FnArg, Ident, ItemTrait, ReturnType, Tra
 /// Create interface trait suitable for usage in integration tests
 #[proc_macro_attribute]
 pub fn make_integration_version(_args: TokenStream, stream: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(stream as ItemTrait);
+    let mut input = parse_macro_input!(stream as ItemTrait);
 
     let trait_name = &input.ident;
 
     let async_trait_name = Ident::new(&format!("{trait_name}Integration"), trait_name.span());
 
-    let async_methods = input.items.iter().filter_map(|item| {
-        if let TraitItem::Fn(method) = item {
-            let async_method = asyncify_method(method.clone());
-            Some(async_method)
-        } else {
-            None
-        }
-    });
+    let async_methods: Vec<_> =
+        input
+            .items
+            .iter_mut()
+            .filter_map(|item| {
+                if let TraitItem::Fn(method) = item {
+                    let async_method = asyncify_method(method);
+                    Some(async_method)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
     quote! {
 
@@ -34,18 +39,21 @@ pub fn make_integration_version(_args: TokenStream, stream: TokenStream) -> Toke
     .into()
 }
 
-fn asyncify_method(mut method: TraitItemFn) -> proc_macro2::TokenStream {
+fn asyncify_method(trait_method: &mut TraitItemFn) -> proc_macro2::TokenStream {
+    let mut method = trait_method.clone();
+
     method.sig.asyncness = Some(Default::default());
 
-    let mut ret = if matches!(method.sig.output, ReturnType::Default) {
-        "()".to_string()
-    } else {
-        let ret = method.sig.output.to_token_stream().to_string();
+    let mut ret =
+        if matches!(method.sig.output, ReturnType::Default) {
+            "()".to_string()
+        } else {
+            let ret = method.sig.output.to_token_stream().to_string();
 
-        let ret = ret.strip_prefix("-> ").unwrap();
+            let ret = ret.strip_prefix("-> ").unwrap();
 
-        ret.to_string()
-    };
+            ret.to_string()
+        };
 
     if ret == "Self" {
         let self_arg: FnArg = parse_str("&self").unwrap();
@@ -63,6 +71,17 @@ fn asyncify_method(mut method: TraitItemFn) -> proc_macro2::TokenStream {
     let ret: Result<ReturnType, _> = parse_str(&format!("-> anyhow::Result<{ret}>"));
 
     method.sig.output = ret.unwrap();
+
+    if let Some(attr) = method.attrs.first() {
+        let attr = attr.path().to_token_stream().to_string();
+        method.attrs = vec![];
+        trait_method.attrs = vec![];
+
+        match attr.as_str() {
+            "update" => method.sig.inputs.push(parse_str("code: &[u8]").unwrap()),
+            _ => unreachable!("Invalid attribute. Only 'update' is supported."),
+        }
+    }
 
     method.to_token_stream()
 }
