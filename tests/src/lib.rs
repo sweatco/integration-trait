@@ -58,7 +58,7 @@ impl ContractNameInterfaceIntegration for () {
         todo!()
     }
 
-    async fn update_contract(&mut self, _code: &[u8]) -> anyhow::Result<()> {
+    async fn update_contract(&mut self, _code: Vec<u8>) -> anyhow::Result<()> {
         todo!()
     }
 }
