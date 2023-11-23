@@ -79,7 +79,8 @@ fn asyncify_method(trait_method: &mut TraitItemFn) -> proc_macro2::TokenStream {
 
         match attr.as_str() {
             "update" => method.sig.inputs.push(parse_str("code: Vec<u8>").unwrap()),
-            _ => unreachable!("Invalid attribute. Only 'update' is supported."),
+            "doc" => (),
+            _ => unreachable!("Invalid attribute: '{attr}'. Only 'update' is supported."),
         }
     }
 

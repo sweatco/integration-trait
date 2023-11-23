@@ -10,6 +10,8 @@ pub trait ContractNameInterface {
     fn receive_name(&self) -> String;
     fn set_name(&mut self, name: String);
 
+    /// Initialize multisig contract.
+    /// @params num_confirmations: k of n signatures required to perform operations.
     fn burn(&mut self) -> PromiseOrValue<U128>;
 
     #[update]
